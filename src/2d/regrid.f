@@ -4,6 +4,9 @@ c
       subroutine regrid  (nvar,lbase,cut,naux,start_time)
 c
       use amr_module
+#ifdef USE_PDAF
+      use mod_assimilation, only: regrid_assim
+#endif
       implicit double precision (a-h,o-z)
       integer newnumgrids(maxlv)
       integer clock_start2, clock_finish, clock_rate
@@ -39,6 +42,11 @@ c
       time      = rnode(timemult, lstart(lbase))
 c
  20   if (lcheck .lt. lbase) go to 50
+!#ifdef USE_PDAF
+!         if(regrid_assim) then
+!            call extract_regions()
+!         endif
+!#endif
           call grdfit(lbase,lcheck,nvar,naux,cut,time,start_time)
           if (newstl(lcheck+1) .eq. 0) go to 40
           lfnew = max0(lcheck + 1,lfnew)

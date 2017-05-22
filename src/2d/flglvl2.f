@@ -25,6 +25,9 @@ c
      &                   start_time)
 c
       use amr_module
+#ifdef USE_PDAF
+      use mod_assimilation, only: regrid_assim
+#endif
       implicit double precision (a-h,o-z)
       integer clock_start, clock_finish, clock_rate
 c
@@ -46,10 +49,24 @@ c                  criteria),  or Richardson error estimation
 c     buffer the flagged cells (done for each grid patch of flags)
 c     also project flags from finer levels onto this level to ensure
 c     proper nesting. Finally compute proper domain for each patch
+#ifdef USE_PDAF
+      if(regrid_assim) then
+        call system_clock(clock_start,clock_rate)
+        call bufnst2_assim(nvar,naux,numbad,lcheck,lbase) 
+        call system_clock(clock_finish,clock_rate)
+        timeBufnst = timeBufnst + clock_finish - clock_start
+      else
+        call system_clock(clock_start,clock_rate)
+        call bufnst2(nvar,naux,numbad,lcheck,lbase) 
+        call system_clock(clock_finish,clock_rate)
+        timeBufnst = timeBufnst + clock_finish - clock_start
+      endif
+#else
       call system_clock(clock_start,clock_rate)
       call bufnst2(nvar,naux,numbad,lcheck,lbase) 
       call system_clock(clock_finish,clock_rate)
       timeBufnst = timeBufnst + clock_finish - clock_start
+#endif
 
       nxypts = nxypts + numbad
 c

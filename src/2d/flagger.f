@@ -31,6 +31,9 @@ c
       subroutine flagger(nvar,naux,lcheck,start_time)
 
       use amr_module
+#ifdef USE_PDAF
+      use mod_assimilation, only: regrid_assim
+#endif
       implicit double precision (a-h,o-z)
 
       integer omp_get_thread_num, omp_get_max_threads
@@ -133,13 +136,32 @@ c     # refinement is desired based on user's criterion.
 c     # Default version compares spatial gradient to tolsp.
 
 c no longer getting locbig, using "real" solution array in locnew
-            call flag2refine2(nx,ny,nghost,mbuff,nvar,naux,
+#ifdef USE_PDAF
+           if(regrid_assim) then
+             !print *, "Running flag2refine2_assim ... in flagger"
+             call flag2refine2_assim(nx,ny,nghost,mbuff,nvar,naux,
      &                        xleft,ybot,dx,dy,time,lcheck,
      &                        tolsp,alloc(locuse),
      &                        alloc(locaux),alloc(locamrflags),
      &                        goodpt,badpt)
-             endif     
-c     
+           else
+             !print *, "Running flag2refine2 ... in flagger"
+             call flag2refine2(nx,ny,nghost,mbuff,nvar,naux,
+     &                        xleft,ybot,dx,dy,time,lcheck,
+     &                        tolsp,alloc(locuse),
+     &                        alloc(locaux),alloc(locamrflags),
+     &                        goodpt,badpt)
+           endif
+#else
+             call flag2refine2(nx,ny,nghost,mbuff,nvar,naux,
+     &                        xleft,ybot,dx,dy,time,lcheck,
+     &                        tolsp,alloc(locuse),
+     &                        alloc(locaux),alloc(locamrflags),
+     &                        goodpt,badpt)
+#endif
+         endif
+
+c
          if (flag_richardson) then
               call errest(nvar,naux,lcheck,mptr,nx,ny)
          endif

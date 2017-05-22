@@ -15,6 +15,9 @@ c
       subroutine bufnst2(nvar,naux,numbad,lcheck,lbase)
 c
       use amr_module
+#ifdef USE_PDAF
+      use mod_assimilation, only: regrid_assim
+#endif
       implicit double precision (a-h,o-z)
 
 
@@ -99,9 +102,24 @@ c
 c      ##  new call to flag regions: check if cells must be refined, or exceed
 c      ##  maximum refinement level for that region.  used to be included with
 c      ## flag2refine. moved here to include flags from richardson too.
+#ifdef USE_PDAF
+       if (regrid_assim) then
+       print *, "running flagregions with regrid_assim"
+       call flagregions2_assim(nx,ny,mbuff,rnode(cornxlo,mptr),
+     1                  rnode(cornylo,mptr),dx,dy,lcheck,time,
+     2                  alloc(locamrflags),goodpt,badpt)
+       else
+       print *, "running flagregions without regrid_assim"
        call flagregions2(nx,ny,mbuff,rnode(cornxlo,mptr),
      1                  rnode(cornylo,mptr),dx,dy,lcheck,time,
      2                  alloc(locamrflags),goodpt,badpt)
+       endif
+
+#else
+       call flagregions2(nx,ny,mbuff,rnode(cornxlo,mptr),
+     1                  rnode(cornylo,mptr),dx,dy,lcheck,time,
+     2                  alloc(locamrflags),goodpt,badpt)
+#endif
 
 c     for this version project to each grid separately, no giant iflags
          if (lcheck+2 .le. mxnest) then
